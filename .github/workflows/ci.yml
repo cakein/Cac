@@ -1,0 +1,30 @@
+name: HabitLab checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: habitlab-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: pnpm/action-setup@v6
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check types and lint
+        run: pnpm typecheck && pnpm lint
+      - name: Build application
+        run: pnpm build
+      - name: Test behavior engine and account isolation
+        run: pnpm test

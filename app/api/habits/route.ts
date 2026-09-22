@@ -1,0 +1,7 @@
+import {assertSameOrigin} from '@/lib/auth';
+import {z} from 'zod';
+import {db,userId,state,failure} from '@/lib/server';
+import {tinyStep} from '@/lib/habits';
+const schema=z.object({name:z.string().trim().min(2).max(100),type:z.enum(['build','break']),cue:z.string().trim().min(1).max(200),behavior:z.string().trim().min(1).max(200),reward:z.string().trim().min(1).max(200),barrier:z.string().trim().min(1).max(200),time:z.string().trim().min(1).max(50),firstStep:z.string().trim().max(300).optional()});
+export async function GET(){try{const uid=await userId();if(!uid)return Response.json({error:'Sign in to save your habits.',authRequired:true},{status:401});return Response.json(await state(uid),{headers:{'Cache-Control':'no-store'}});}catch(e){return failure(e);}}
+export async function POST(req:Request){try{assertSameOrigin(req);const uid=await userId();if(!uid)return Response.json({error:'Sign in to save your habits.'},{status:401});const p=schema.safeParse(await req.json());if(!p.success)return Response.json({error:'Please complete all habit questions.'},{status:400});const habit={...p.data,id:crypto.randomUUID(),firstStep:p.data.firstStep||tinyStep(p.data.name,p.data.type),createdAt:new Date().toISOString()};await db().prepare('INSERT INTO habits (id,user_id,data,created_at) VALUES (?,?,?,?)').bind(habit.id,uid,JSON.stringify(habit),habit.createdAt).run();return Response.json({habit});}catch(e){return failure(e);}}

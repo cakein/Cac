@@ -1,0 +1,4 @@
+import {sqliteTable,text,integer,uniqueIndex,index} from 'drizzle-orm/sqlite-core';
+export const habits=sqliteTable('habits',{id:text('id').primaryKey(),userId:text('user_id').notNull(),data:text('data').notNull(),createdAt:text('created_at').notNull()},t=>[index('habits_user_idx').on(t.userId)]);
+export const logs=sqliteTable('logs',{id:text('id').primaryKey(),userId:text('user_id').notNull(),habitId:text('habit_id').notNull(),date:text('date').notNull(),data:text('data').notNull()},t=>[uniqueIndex('logs_user_habit_date').on(t.userId,t.habitId,t.date)]);
+export const messages=sqliteTable('messages',{id:integer('id').primaryKey({autoIncrement:true}),userId:text('user_id').notNull(),role:text('role').notNull(),content:text('content').notNull()},t=>[index('messages_user_idx').on(t.userId)]);
